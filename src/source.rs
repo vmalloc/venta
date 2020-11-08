@@ -1,4 +1,4 @@
-use crate::venta::Publisher;
+use crate::publisher::Publisher;
 use anyhow::Result;
 use pulsar::{Pulsar, TokioExecutor};
 pub enum Source {
