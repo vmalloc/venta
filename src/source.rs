@@ -45,3 +45,7 @@ impl ClientSpec {
         })
     }
 }
+
+pub fn local() -> Source {
+    Source::Local
+}

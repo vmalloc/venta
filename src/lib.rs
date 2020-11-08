@@ -1,9 +1,5 @@
-use crate::source::Source;
+pub use crate::source::local;
 
 mod message;
 mod publisher;
 mod source;
-
-pub fn local() -> Source {
-    Source::Local
-}
