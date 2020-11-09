@@ -15,7 +15,10 @@ impl Message {
             Publisher::Pulsar { producer } => {
                 let message = pulsar::producer::Message {
                     payload: self.data.to_vec(),
-                    event_time: self.timestamp.map(|ts| ts.timestamp_millis() as u64),
+                    event_time: self
+                        .timestamp
+                        .or_else(|| Some(Utc::now()))
+                        .map(|ts| ts.timestamp_millis() as u64),
                     ..Default::default()
                 };
 

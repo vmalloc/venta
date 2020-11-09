@@ -1,6 +1,7 @@
 use crate::publisher::Publisher;
 use anyhow::Result;
 use pulsar::TokioExecutor;
+use url::Url;
 
 pub enum Broker {
     Pulsar {
@@ -12,8 +13,13 @@ pub struct Pulsar;
 
 impl Pulsar {
     pub async fn connect_local() -> Result<Broker> {
-        let addr = "pulsar://127.0.0.1:6650";
-        let client = pulsar::Pulsar::builder(addr, TokioExecutor).build().await?;
+        Self::connect(&"pulsar://127.0.0.1:6650".parse()?).await
+    }
+
+    pub async fn connect(url: &Url) -> Result<Broker> {
+        let client = pulsar::Pulsar::builder(url.to_string(), TokioExecutor)
+            .build()
+            .await?;
         Ok(Broker::Pulsar { client })
     }
 }
