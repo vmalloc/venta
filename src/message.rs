@@ -3,10 +3,12 @@ use crate::publisher::Publisher;
 use anyhow::{bail, format_err, Error, Result};
 use chrono::DateTime;
 use chrono::Utc;
+use std::collections::HashMap;
 
 pub(crate) struct Message {
     data: Vec<u8>,
     timestamp: Option<DateTime<Utc>>,
+    properties: HashMap<String, String>,
 }
 
 impl Message {
@@ -15,6 +17,7 @@ impl Message {
             Publisher::Pulsar { producer } => {
                 let message = pulsar::producer::Message {
                     payload: self.data.to_vec(),
+                    properties: self.properties.clone(),
                     event_time: self
                         .timestamp
                         .or_else(|| Some(Utc::now()))
@@ -35,6 +38,7 @@ impl Message {
 #[derive(Default)]
 pub(crate) struct MessageBuilder {
     data: Option<Result<Vec<u8>>>,
+    properties: HashMap<String, String>,
     timestamp: Option<DateTime<Utc>>,
 }
 
@@ -45,7 +49,12 @@ impl MessageBuilder {
             .ok_or_else(|| format_err!("No data set"))
             .and_then(|data| data)?;
         let timestamp = self.timestamp;
-        Ok(Message { data, timestamp })
+        let properties = self.properties;
+        Ok(Message {
+            data,
+            timestamp,
+            properties,
+        })
     }
 }
 
@@ -74,6 +83,11 @@ impl<'a> PublishedMessage<'a> {
 
     pub fn timestamp(mut self, ts: DateTime<Utc>) -> Self {
         self.message.timestamp.replace(ts);
+        self
+    }
+
+    pub fn property(mut self, name: impl Into<String>, value: impl Into<String>) -> Self {
+        self.message.properties.insert(name.into(), value.into());
         self
     }
 
