@@ -91,6 +91,13 @@ impl<'a> PublishedMessage<'a> {
         self
     }
 
+    pub fn properties(mut self, properties: impl Iterator<Item = (String, String)>) -> Self {
+        for (key, value) in properties {
+            self.message.properties.insert(key, value);
+        }
+        self
+    }
+
     fn build(self) -> Result<(MessageDestination<'a>, Message)> {
         let message = self
             .message
