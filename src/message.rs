@@ -112,7 +112,7 @@ impl<'a> PublishedMessage<'a> {
 
         match publisher {
             MessageDestination::Sync(p) => message.send(p).await,
-            MessageDestination::Background(mut p) => {
+            MessageDestination::Background(p) => {
                 p.tx.send(message)
                     .await
                     .map_err(|_| format_err!("Failed to enqueue message"))
@@ -123,7 +123,7 @@ impl<'a> PublishedMessage<'a> {
     pub fn enqueue(self) -> Result<()> {
         let (publisher, message) = self.build()?;
 
-        if let MessageDestination::Background(mut p) = publisher {
+        if let MessageDestination::Background(p) = publisher {
             p.tx.try_send(message)
                 .map_err(|_| format_err!("Cannot enqueue message"))
         } else {
