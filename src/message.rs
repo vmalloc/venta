@@ -1,5 +1,5 @@
-use crate::publisher::BackgroundPublisher;
-use crate::publisher::Publisher;
+use crate::producer::BackgroundPublisher;
+use crate::producer::Producer;
 use anyhow::{bail, format_err, Error, Result};
 use chrono::DateTime;
 use chrono::Utc;
@@ -12,9 +12,9 @@ pub(crate) struct Message {
 }
 
 impl Message {
-    pub(crate) async fn send(&self, publisher: &mut Publisher) -> Result<()> {
+    pub(crate) async fn send(&self, publisher: &mut Producer) -> Result<()> {
         match publisher {
-            Publisher::Pulsar { producer } => {
+            Producer::Pulsar { producer, .. } => {
                 let message = pulsar::producer::Message {
                     payload: self.data.to_vec(),
                     properties: self.properties.clone(),
@@ -64,8 +64,24 @@ pub struct PublishedMessage<'a> {
 }
 
 pub(super) enum MessageDestination<'a> {
-    Sync(&'a mut Publisher),
+    Sync(&'a mut Producer),
     Background(BackgroundPublisher),
+}
+
+impl<'a> MessageDestination<'a> {
+    fn producer_name(&self) -> &str {
+        match self {
+            MessageDestination::Sync(p) => p.producer_name(),
+            MessageDestination::Background(bg) => &bg.producer_name,
+        }
+    }
+
+    fn topic_name(&self) -> &str {
+        match self {
+            MessageDestination::Sync(p) => p.topic_name(),
+            MessageDestination::Background(bg) => &bg.topic_name,
+        }
+    }
 }
 
 impl<'a> PublishedMessage<'a> {
@@ -121,11 +137,19 @@ impl<'a> PublishedMessage<'a> {
     }
 
     pub fn enqueue(self) -> Result<()> {
-        let (publisher, message) = self.build()?;
+        let (producer, message) = self.build()?;
 
-        if let MessageDestination::Background(p) = publisher {
-            p.tx.try_send(message)
-                .map_err(|_| format_err!("Cannot enqueue message"))
+        if let MessageDestination::Background(p) = &producer {
+            let res =
+                p.tx.try_send(message)
+                    .map_err(|_| format_err!("Cannot enqueue message"));
+            #[cfg(feature = "metrics")]
+            if res.is_ok() {
+                crate::metrics::NUM_MSGS_QUEUED
+                    .with_label_values(&[producer.producer_name(), producer.topic_name()])
+                    .inc();
+            }
+            res
         } else {
             bail!("Cannot enqueue when not using a background publisher");
         }

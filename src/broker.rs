@@ -1,4 +1,4 @@
-use crate::publisher::Publisher;
+use crate::producer::Producer;
 use anyhow::Result;
 use pulsar::TokioExecutor;
 use url::Url;
@@ -25,12 +25,14 @@ impl Pulsar {
 }
 
 impl Broker {
-    pub async fn publisher(self, topic_name: &str, publisher_name: &str) -> Result<Publisher> {
+    pub async fn publisher(self, topic_name: &str, producer_name: &str) -> Result<Producer> {
         match self {
-            Broker::Pulsar { client } => Ok(Publisher::Pulsar {
+            Broker::Pulsar { client } => Ok(Producer::Pulsar {
+                topic_name: topic_name.to_owned(),
+                producer_name: producer_name.to_owned(),
                 producer: client
                     .producer()
-                    .with_name(publisher_name)
+                    .with_name(producer_name)
                     .with_topic(topic_name)
                     .build()
                     .await?,

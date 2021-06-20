@@ -1,11 +1,13 @@
 #![deny(warnings)]
 #![deny(clippy::dbg_macro)]
 pub use crate::broker::Pulsar;
-pub use crate::publisher::BackgroundPublisher;
+pub use crate::producer::BackgroundPublisher;
 
 mod broker;
 mod message;
-mod publisher;
+#[cfg(feature = "metrics")]
+mod metrics;
+mod producer;
 
 #[cfg(doctest)]
 mod test_readme {
