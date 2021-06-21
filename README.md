@@ -23,7 +23,7 @@ Venta is a high-level ergonomic wrapper around pub-sub services, aimed at being 
 For simple cases:
 ```rust
     async fn f() -> anyhow::Result<()> {
-        let producer = venta::BackgroundProducer::spawn_simple("pulsar://127.0.0.1", "topic_name", Some("producer_name")).await?;
+        let producer = venta::BackgroundProducer::spawn_simple("pulsar://127.0.0.1", "topic_name", Some("producer_name".into())).await?;
         let json_data = serde_json::json!({"field": 2});
     
         producer.produce().json(&json_data).enqueue()
