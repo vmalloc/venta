@@ -3,7 +3,7 @@
 	"tasks": [
 		{
 			"type": "shell",
-			"command": "cargo check --all --all-features --workspace --tests",
+			"command": "cargo check --all --all-features --workspace --tests --examples",
 			"problemMatcher": [
 				"$rustc"
 			],

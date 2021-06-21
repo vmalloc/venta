@@ -5,13 +5,13 @@ lazy_static! {
     pub static ref NUM_MSGS_QUEUED: IntCounterVec = register_int_counter_vec!(
         "venta_num_messages_queued",
         "Number of messages queued",
-        &["producer", "topic"]
+        &["topic"]
     )
     .unwrap();
     pub static ref NUM_MSGS_SENT: IntCounterVec = register_int_counter_vec!(
         "venta_num_messages_sent",
         "Number of messages sent",
-        &["producer", "topic"]
+        &["topic"]
     )
     .unwrap();
 }

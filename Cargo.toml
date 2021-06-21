@@ -1,6 +1,6 @@
 [package]
 authors = ["vmalloc"]
-description = "Ergonomic Rusty wrappers around pub-sub services"
+description = "Reliable producer interface for Pulsar"
 documentation = "https://docs.rs/venta"
 edition = "2018"
 homepage = "https://github.com/vmalloc/venta"
@@ -29,3 +29,7 @@ serde = "1.0.117"
 serde_json = "1.0.59"
 tokio = {version = "1.6.2", features = ["sync", "rt"]}
 url = "2.2.0"
+
+[dev-dependencies]
+env_logger = "0.8.4"
+tokio = {version = "1.6.2", features = ["sync", "rt", "rt-multi-thread", "macros"]}

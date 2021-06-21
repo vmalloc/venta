@@ -1,9 +1,7 @@
 #![deny(warnings)]
 #![deny(clippy::dbg_macro)]
-pub use crate::broker::Pulsar;
-pub use crate::producer::BackgroundPublisher;
+pub use crate::producer::BackgroundProducer;
 
-mod broker;
 mod message;
 #[cfg(feature = "metrics")]
 mod metrics;
