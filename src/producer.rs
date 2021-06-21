@@ -47,6 +47,34 @@ impl RetryQueue {
 }
 
 impl BackgroundProducer {
+    pub async fn spawn_simple(
+        url: impl Into<String>,
+        topic: impl Into<String>,
+        producer_name: Option<String>,
+    ) -> Result<Self> {
+        let url: String = url.into();
+        let topic: String = topic.into();
+
+        Self::spawn(move || {
+            let url = url.clone();
+            let topic = topic.clone();
+            let producer_name = producer_name.clone();
+            async move {
+                let mut returned = pulsar::Pulsar::builder(url.clone(), TokioExecutor)
+                    .build()
+                    .await?
+                    .producer()
+                    .with_topic(topic);
+                if let Some(producer_name) = producer_name.clone() {
+                    returned = returned.with_name(&producer_name);
+                }
+
+                returned.build().await
+            }
+        })
+        .await
+    }
+
     pub async fn spawn<Fut, F, E>(producer_factory: F) -> Result<Self>
     where
         Fut: Future<Output = Result<Producer<TokioExecutor>, E>> + Send,
