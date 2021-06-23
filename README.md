@@ -3,8 +3,12 @@
 Venta is a Rust library implementing a robust, ergonomic and non-blocking producer for Apache Pulsar. It builds upon [pulsar-rs](https://github.com/wyyerd/pulsar-rs), but adds some missing pieces:
 
 1. Venta publishes messages in the background, meaning that enqueuing a message happens immediately, given enough queue space. This is useful for applications that do not want to block on the actual publishing operation
-2. Venta adds retries and timeouts on top of pulsar-rs, allowing it to recover from errors which cause pulsar-rs to get stuck or return with errors
-3. Venta is more ergonomic for the common use cases (e.g. publishing json messages, adding properties etc.)
+2. Venta adds retries and timeouts on top of pulsar-rs, allowing it to recover from errors which cause pulsar-rs to get stuck or return with errors. 
+3. Message event times are automatically set to the time of adding them to the queue, allowing consumers to reason about original message times
+4. Venta is more ergonomic for the common use cases (e.g. publishing json messages, adding properties etc.)
+
+
+
 # Usage
 
 For a simple use case, in which you would like to configure a producer with a topic name and a producer name, you can use `spawn_simple`:

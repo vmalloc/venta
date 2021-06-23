@@ -48,7 +48,7 @@ impl MessageBuilder {
             .data
             .ok_or_else(|| format_err!("No data set"))
             .and_then(|data| data)?;
-        let timestamp = self.timestamp;
+        let timestamp = self.timestamp.or_else(|| Some(Utc::now()));
         let properties = self.properties;
         Ok(Message {
             data,
