@@ -5,6 +5,9 @@ use futures::Future;
 use pulsar::Producer;
 use pulsar::TokioExecutor;
 use std::error::Error as StdError;
+use std::sync::atomic::AtomicU64;
+use std::sync::atomic::Ordering;
+use std::sync::Arc;
 use std::time::Duration;
 use std::time::Instant;
 use tokio::sync::mpsc::{Receiver, Sender};
@@ -16,6 +19,7 @@ const RETRY_DELAY: Duration = Duration::from_secs(1);
 pub struct BackgroundProducer {
     topic_name: String,
     tx: Sender<Message>,
+    pending: Arc<AtomicU64>,
 }
 
 struct RetryQueue {
@@ -85,6 +89,8 @@ impl BackgroundProducer {
         let topic_name = producer.as_ref().unwrap().topic().to_owned();
 
         let (tx, rx) = tokio::sync::mpsc::channel::<Message>(1000);
+        let pending = Arc::new(AtomicU64::new(0));
+        let pending_msgs = pending.clone();
         let mut queue = RetryQueue {
             rx,
             unsent: None,
@@ -127,6 +133,7 @@ impl BackgroundProducer {
                         producer = None
                     }
                 } else {
+                    pending_msgs.fetch_sub(1, std::sync::atomic::Ordering::Relaxed);
                     #[cfg(feature = "metrics")]
                     crate::metrics::NUM_MSGS_SENT
                         .with_label_values(&[&topic_name_label])
@@ -134,7 +141,11 @@ impl BackgroundProducer {
                 }
             }
         });
-        Ok(Self { topic_name, tx })
+        Ok(Self {
+            topic_name,
+            tx,
+            pending,
+        })
     }
 
     pub fn produce(&self) -> ProducedMessage {
@@ -144,11 +155,17 @@ impl BackgroundProducer {
         }
     }
 
+    pub fn has_pending_messages(&self) -> bool {
+        self.pending.load(Ordering::Relaxed) > 0
+    }
+
     pub(crate) fn enqueue(&self, msg: Message) -> Result<()> {
         self.tx
             .try_send(msg)
             .map_err(|_| format_err!("Cannot enqueue message"))
             .map(|()| {
+                self.pending
+                    .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
                 #[cfg(feature = "metrics")]
                 crate::metrics::NUM_MSGS_QUEUED
                     .with_label_values(&[&self.topic_name])
