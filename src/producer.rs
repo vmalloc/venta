@@ -17,6 +17,7 @@ const RETRY_DELAY: Duration = Duration::from_secs(1);
 
 #[derive(Clone)]
 pub struct BackgroundProducer {
+    #[cfg(feature = "metrics")]
     topic_name: String,
     tx: Sender<Message>,
     pending: Arc<AtomicU64>,
@@ -86,6 +87,8 @@ impl BackgroundProducer {
         F: Fn() -> Fut + Send + Sync + 'static,
     {
         let mut producer = Some(producer_factory().await.map_err(Into::into)?);
+
+        #[cfg(feature = "metrics")]
         let topic_name = producer.as_ref().unwrap().topic().to_owned();
 
         let (tx, rx) = tokio::sync::mpsc::channel::<Message>(1000);
@@ -142,6 +145,7 @@ impl BackgroundProducer {
             }
         });
         Ok(Self {
+            #[cfg(feature = "metrics")]
             topic_name,
             tx,
             pending,
