@@ -160,7 +160,11 @@ impl BackgroundProducer {
     }
 
     pub fn has_pending_messages(&self) -> bool {
-        self.pending.load(Ordering::Relaxed) > 0
+        self.num_pending_messages() > 0
+    }
+
+    pub fn num_pending_messages(&self) -> u64 {
+        self.pending.load(Ordering::Relaxed)
     }
 
     pub(crate) fn enqueue(&self, msg: Message) -> Result<()> {
